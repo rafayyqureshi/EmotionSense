@@ -25,6 +25,7 @@ var/
 
 # Uploads and logs
 uploads/*
+!uploads/.gitkeep
 !uploads/sample_comments.csv
 analysis_log.json
 
