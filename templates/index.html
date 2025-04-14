@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotion Analysis - Social Media Sentiment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-light">
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-gradient" style="background-color: #4267B2;">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center" href="#">
+                <i class="fas fa-brain me-2"></i>
+                <span>EmotionSense</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item mx-1">
+                        <a class="nav-link active px-3 rounded-pill" href="#analyzeTab" id="analyze-tab" data-bs-toggle="tab">
+                            <i class="fas fa-comment-dots me-1"></i> Analyze
+                        </a>
+                    </li>
+                    <li class="nav-item mx-1">
+                        <a class="nav-link px-3 rounded-pill" href="#batchTab" id="batch-tab" data-bs-toggle="tab">
+                            <i class="fas fa-file-csv me-1"></i> Batch Analysis
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content wrapper - flex-grow will push footer down -->
+    <main class="flex-grow-1">
+        <div class="container py-4">
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 text-center">
+                            <h1 class="display-6 fw-bold mb-3">Analyze emotions in social media content</h1>
+                            <p class="lead text-muted">Understand how your audience feels with our advanced emotion analysis tools</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content">
+                <!-- Analyze Tab -->
+                <div class="tab-pane fade show active" id="analyzeTab">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-white border-bottom-0 py-3">
+                                    <h5 class="mb-0"><i class="fas fa-pen-to-square me-2"></i>Enter Content to Analyze</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="analyzeForm">
+                                        <div class="mb-3">
+                                            <textarea class="form-control border" id="commentInput" rows="4" placeholder="Type or paste a social media post, comment, or review here..." required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <p class="fw-semibold text-muted mb-2">Analysis Model:</p>
+                                            <div class="d-flex flex-wrap">
+                                                <div class="form-check me-4 mb-2">
+                                                    <input class="form-check-input" type="radio" name="modelType" id="modelBERT" value="bert" checked>
+                                                    <label class="form-check-label" for="modelBERT">
+                                                        <i class="fas fa-robot me-1"></i> BERT
+                                                    </label>
+                                                </div>
+                                                <div class="form-check me-4 mb-2">
+                                                    <input class="form-check-input" type="radio" name="modelType" id="modelGPT" value="gpt">
+                                                    <label class="form-check-label" for="modelGPT">
+                                                        <i class="fas fa-brain me-1"></i> GPT
+                                                    </label>
+                                                </div>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input" type="radio" name="modelType" id="modelEnsemble" value="ensemble">
+                                                    <label class="form-check-label" for="modelEnsemble">
+                                                        <i class="fas fa-layer-group me-1"></i> Ensemble
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-bolt me-2"></i>Analyze Content
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100">
+                                <div class="card-header bg-white border-bottom-0 py-3">
+                                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Emotional Analysis</h5>
+                                </div>
+                                <div class="card-body" id="resultContainer">
+                                    <div class="text-center py-5">
+                                        <img src="https://cdn-icons-png.flaticon.com/512/4076/4076478.png" alt="Analysis" class="img-fluid mb-3" style="max-width: 120px; opacity: 0.6;">
+                                        <p class="text-muted">Enter content and click "Analyze Content" to see emotion insights</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Batch Tab -->
+                <div class="tab-pane fade" id="batchTab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom-0 py-3">
+                            <h5 class="mb-0"><i class="fas fa-file-import me-2"></i>Batch Process Multiple Comments</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-8 mx-auto">
+                                    <div class="alert alert-info border-0 d-flex" role="alert">
+                                        <i class="fas fa-info-circle fs-4 me-3 align-self-center"></i>
+                                        <div>
+                                            <p class="mb-1"><strong>Upload a CSV file</strong> with multiple comments to analyze in bulk.</p>
+                                            <p class="mb-0 small">File must have a column named 'comment'. Limited to processing 5 rows at a time to prevent API overload.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <form id="batchForm" class="row g-3">
+                                <div class="col-md-8 mx-auto">
+                                    <div class="card bg-light border-0">
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label for="csvFileInput" class="form-label fw-semibold">Select CSV File</label>
+                                                <input class="form-control" type="file" id="csvFileInput" accept=".csv" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <p class="fw-semibold mb-2">Analysis Model:</p>
+                                                <div class="d-flex flex-wrap">
+                                                    <div class="form-check me-4 mb-2">
+                                                        <input class="form-check-input" type="radio" name="batchModelType" id="batchModelBERT" value="bert" checked>
+                                                        <label class="form-check-label" for="batchModelBERT">
+                                                            <i class="fas fa-robot me-1"></i> BERT
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check me-4 mb-2">
+                                                        <input class="form-check-input" type="radio" name="batchModelType" id="batchModelGPT" value="gpt">
+                                                        <label class="form-check-label" for="batchModelGPT">
+                                                            <i class="fas fa-brain me-1"></i> GPT
+                                                        </label>
+                                                    </div>
+                                                    <div class="form-check mb-2">
+                                                        <input class="form-check-input" type="radio" name="batchModelType" id="batchModelEnsemble" value="ensemble">
+                                                        <label class="form-check-label" for="batchModelEnsemble">
+                                                            <i class="fas fa-layer-group me-1"></i> Ensemble
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="fas fa-cogs me-2"></i>Process File
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                            <div id="batchResultContainer" class="mt-4"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Simplified footer that will stick to bottom -->
+    <footer class="bg-dark text-white py-3">
+        <div class="container text-center">
+            <p class="mb-0">Developed by Rafay</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
