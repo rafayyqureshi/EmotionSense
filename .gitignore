@@ -31,6 +31,8 @@ analysis_log.json
 
 # Virtual Environment
 venv/
+.venv/
+.venv-clean/
 ENV/
 
 # IDE files
@@ -84,4 +86,4 @@ data/*
 .vscode/
 
 # macOS
-.DS_Store 
+.DS_Store

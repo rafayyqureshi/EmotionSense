@@ -1,4 +1,10 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const escapeHtml = window.EmotionText.escapeHtml;
+    const pipelineLabels = {
+        bert: 'Emotion classifier',
+        gpt: 'Generated-text rules',
+        ensemble: 'Mixed (experimental)'
+    };
     // Initialize tab click listeners
     const analyzeTab = document.getElementById('analyze-tab');
     const batchTab = document.getElementById('batch-tab');
@@ -58,7 +64,9 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(response => {
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                return response.json().then(errorData => {
+                    throw new Error(errorData.error || 'The request could not be completed');
+                });
             }
             return response.json();
         })
@@ -90,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Check file type
         const file = fileInput.files[0];
-        if (!file.name.endsWith('.csv')) {
+        if (!file.name.toLowerCase().endsWith('.csv')) {
             showAlert('Please select a CSV file', 'danger', 'batchResultContainer');
             return;
         }
@@ -111,8 +119,6 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('file', file);
         formData.append('model_type', model);
         
-        console.log('Submitting batch with model:', model); // Debug log
-        
         // Make API call
         fetch('/api/batch', {
             method: 'POST',
@@ -127,8 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
             return response.json();
         })
         .then(data => {
-            console.log('Batch API response:', data); // Debug log
-            
             if (data.error) {
                 throw new Error(data.error);
             }
@@ -142,7 +146,6 @@ document.addEventListener('DOMContentLoaded', function() {
             displayBatchResults(data);
         })
         .catch(error => {
-            console.error('Batch API error:', error); // Debug log
             // Display error
             showAlert('An error occurred: ' + error.message, 'danger', 'batchResultContainer');
         });
@@ -153,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = document.getElementById(containerId);
         container.innerHTML = `
             <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
+                ${escapeHtml(message)}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         `;
@@ -171,16 +174,21 @@ document.addEventListener('DOMContentLoaded', function() {
         commentInfo.className = 'mb-4';
         commentInfo.innerHTML = `
             <h5 class="mb-3">Analysis Results</h5>
-            <p><strong>Comment:</strong> "${data.comment || 'No comment provided'}"</p>
-            <p><strong>Model:</strong> <span class="badge bg-dark">${data.model}</span></p>
+            <p><strong>Comment:</strong> "${escapeHtml(data.comment || 'No comment provided')}"</p>
+            <p><strong>Pipeline:</strong> <span class="badge bg-dark">${escapeHtml(pipelineLabels[data.model] || data.model)}</span></p>
+            <p><strong>Result source:</strong> ${escapeHtml(data.provenance.label)}</p>
         `;
         resultsElement.appendChild(commentInfo);
+        const sourceNotice = document.createElement('p');
+        sourceNotice.className = 'alert alert-info small';
+        sourceNotice.textContent = data.provenance.note;
+        resultsElement.appendChild(sourceNotice);
         
         // Create primary emotion section
         const primaryEmotionSection = document.createElement('div');
         primaryEmotionSection.className = 'mb-4';
         primaryEmotionSection.innerHTML = `
-            <h5 class="mb-3">Primary Emotion</h5>
+            <h5 class="mb-3">Highest relative score</h5>
             <div class="emotion-badge emotion-${data.primary_emotion.toLowerCase()}">
                 <span>${capitalizeFirstLetter(data.primary_emotion)}</span>
                 <span class="badge bg-dark">${(data.emotions[data.primary_emotion] * 100).toFixed(1)}%</span>
@@ -191,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Create emotion breakdown section
         const emotionBreakdownSection = document.createElement('div');
         emotionBreakdownSection.className = 'mb-4';
-        emotionBreakdownSection.innerHTML = '<h5 class="mb-3">Emotion Breakdown</h5>';
+        emotionBreakdownSection.innerHTML = '<h5 class="mb-3">Relative scores</h5><p class="small text-muted">These scores are not calibrated confidence.</p>';
         
         // Create emotion bars
         const emotionBars = document.createElement('div');
@@ -246,8 +254,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-body">
                 <h5 class="card-title mb-3">Batch Analysis Results</h5>
                 <p><strong>Total Comments Processed:</strong> ${data.results.length}</p>
-                <p><strong>Model:</strong> <span class="badge bg-dark">${data.results[0]?.analysis?.model || 'Unknown'}</span></p>
-                ${data.warning ? `<div class="alert alert-warning">${data.warning}</div>` : ''}
+                <p><strong>Pipeline:</strong> <span class="badge bg-dark">${escapeHtml(pipelineLabels[data.results[0]?.analysis?.model] || 'Unknown')}</span></p>
+                <p class="small text-muted">Relative scores are not calibrated confidence. Each row shows its result source.</p>
+                ${data.warning ? `<div class="alert alert-warning">${escapeHtml(data.warning)}</div>` : ''}
+                ${data.errors?.length ? `<p class="text-warning">${data.errors.length} invalid row(s) skipped.</p>` : ''}
             </div>
         `;
         resultsElement.appendChild(summaryInfo);
@@ -306,7 +316,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             <tr>
                                 <th scope="col">#</th>
                                 <th scope="col">Comment</th>
-                                <th scope="col">Primary Emotion</th>
+                                <th scope="col">Highest score</th>
+                                <th scope="col">Result source</th>
                             </tr>
                         </thead>
                         <tbody id="commentsTableBody"></tbody>
@@ -323,8 +334,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${index + 1}</td>
-                <td>${result.comment}</td>
+                <td>${escapeHtml(result.comment)}</td>
                 <td><span class="badge emotion-${result.analysis.primary_emotion.toLowerCase()}">${capitalizeFirstLetter(result.analysis.primary_emotion)}</span></td>
+                <td>${escapeHtml(result.analysis.provenance.label)}</td>
             `;
             tableBody.appendChild(row);
         });
@@ -334,4 +346,4 @@ document.addEventListener('DOMContentLoaded', function() {
     function capitalizeFirstLetter(string) {
         return string.charAt(0).toUpperCase() + string.slice(1).toLowerCase();
     }
-}); 
+});
