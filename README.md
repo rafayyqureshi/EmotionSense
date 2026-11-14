@@ -1,78 +1,69 @@
-# Emotion Analysis System
+# EmotionSense — Text Emotion Analysis
 
-A web application for analyzing emotions in text comments using natural language processing.
+**Python · Flask · Model API integration · CSV processing**
 
-## Features
+A Flask prototype for exploring emotion analysis through a single-comment interface and a CSV batch workflow.
 
-- Single comment emotion analysis
-- Batch processing of CSV files containing multiple comments
-- Multiple model options: BERT, GPT, and Ensemble
-- Clean, modern social media inspired interface
-- Responsive design for desktop and mobile devices
+## What is implemented
 
-## Project Structure
+- Single-comment analysis with BERT, GPT and ensemble options.
+- CSV uploads containing a comment column.
+- Hugging Face inference API integration.
+- Browser interface and JSON endpoints.
+- Local upload storage and analysis logging.
 
-```
-├── app.py                 # Main Flask application
-├── static/
-│   ├── css/               # CSS stylesheets
-│   │   └── style.css
-│   └── js/                # JavaScript files
-│       └── main.js
-├── templates/             # HTML templates
-│   └── index.html
-└── uploads/               # Directory for uploaded files (created at runtime)
-```
+## Model behavior
 
-## Installation
+The application attempts remote inference when configured. If a request fails, it falls back to keyword-based scores with random variation. Fallback output is illustrative, not a measured model prediction. No model-quality benchmark is claimed.
 
-1. Clone the repository
-2. Install the required dependencies:
+## Run locally
 
-```bash
-pip install -r requirements.txt
-```
+Create and activate a virtual environment, then run:
 
-## Usage
-
-1. Run the Flask application:
-
-```bash
+~~~bash
+python -m pip install -r requirements.txt
 python app.py
-```
+~~~
 
-2. Open your web browser and navigate to `http://127.0.0.1:5000/`
+Open http://127.0.0.1:5000/.
 
-## API Endpoints
+For remote inference, set HUGGINGFACE_API_KEY in your local environment or a local .env file. Keep the key outside Git. Without a usable inference response, the fallback path remains available.
 
-- `GET /` - Main application page
-- `POST /api/analyze` - Analyze a single comment
-- `POST /api/batch` - Process a batch of comments from a CSV file
+## API
 
-## CSV File Format
+| Method | Route | Input |
+| --- | --- | --- |
+| GET | / | Browser interface |
+| POST | /api/analyze | JSON with comment and optional model_type |
+| POST | /api/batch | Multipart file upload and optional model_type |
 
-For batch processing, the CSV file should contain a column named `comment`:
+Example single-comment request:
 
-```
+~~~json
+{
+  "comment": "I am excited to start this project.",
+  "model_type": "bert"
+}
+~~~
+
+A batch CSV uses this shape:
+
+~~~csv
 comment
-"I'm so excited about the upcoming vacation! Can't wait!"
-"This is completely unacceptable! I've been waiting for hours!"
-"I miss how things used to be. Nothing feels the same anymore."
-"The meeting went well, we discussed the next steps..."
-"I'm really worried about the deadline, we might not make it."
-```
+"I am excited to start this project."
+"The delivery was delayed."
+~~~
 
-## Technologies Used
+## Code map
 
-- Backend: Python, Flask
-- Frontend: HTML, CSS, JavaScript
-- Libraries: Bootstrap, Font Awesome
-- Data Processing: pandas
+| Path | Purpose |
+| --- | --- |
+| app.py | Routes, API integration, response mapping and fallback logic |
+| templates/index.html | Browser interface |
+| static/ | Interface styles and client behavior |
+| sample_comments.csv | Small example batch |
+| requirements.txt | Application dependencies |
 
-## Future Improvements
+Uploads are stored locally in uploads/. Analysis events are appended to analysis_log.json. The application is a development prototype, with no user-account or production operations layer.
 
-- Integration with a real NLP model for emotion analysis
-- User authentication system
-- Historical analysis tracking
-- Export functionality for analysis results
-- Multi-language support 
+[Software engineering portfolio](https://github.com/rafayyqureshi/rafay-portfolio)
